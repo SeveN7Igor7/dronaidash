@@ -319,25 +319,30 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
 
       {/* TABS DETALHADAS */}
       <Tabs defaultValue="relatorio" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="relatorio">
-            <Brain className="h-4 w-4 mr-2" />📋 Relatório IA
+        <TabsList className="grid w-full grid-cols-6 gap-2">
+          <TabsTrigger value="relatorio" className="flex flex-col items-center p-3">
+            <Brain className="h-4 w-4 mb-1" />
+            <span className="text-xs">📋 Relatório IA</span>
           </TabsTrigger>
-          <TabsTrigger value="imagens">
-            <Camera className="h-4 w-4 mr-2" />📸 Imagens
+          <TabsTrigger value="imagens" className="flex flex-col items-center p-3">
+            <Camera className="h-4 w-4 mb-1" />
+            <span className="text-xs">📸 Imagens</span>
           </TabsTrigger>
-          <TabsTrigger value="dados">
-            <BarChart3 className="h-4 w-4 mr-2" />📊 Dados Técnicos
+          <TabsTrigger value="dados" className="flex flex-col items-center p-3">
+            <BarChart3 className="h-4 w-4 mb-1" />
+            <span className="text-xs">📊 Dados Técnicos</span>
           </TabsTrigger>
-          <TabsTrigger value="visual">
-            <Eye className="h-4 w-4 mr-2" />📊 Análise Visual
+          <TabsTrigger value="visual" className="flex flex-col items-center p-3">
+            <Eye className="h-4 w-4 mb-1" />
+            <span className="text-xs">📊 Análise Visual</span>
           </TabsTrigger>
-          <TabsTrigger value="monitoramento">
-            <Eye className="h-4 w-4 mr-2" />
-            👁️ Monitoramento
+          <TabsTrigger value="monitoramento" className="flex flex-col items-center p-3">
+            <Eye className="h-4 w-4 mb-1" />
+            <span className="text-xs">👁️ Monitoramento</span>
           </TabsTrigger>
-          <TabsTrigger value="historico">
-            <Clock className="h-4 w-4 mr-2" />📊 Histórico
+          <TabsTrigger value="historico" className="flex flex-col items-center p-3">
+            <Clock className="h-4 w-4 mb-1" />
+            <span className="text-xs">📊 Histórico</span>
           </TabsTrigger>
         </TabsList>
 
