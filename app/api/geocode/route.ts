@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+const INVERTEXTO_TOKEN = "20193|uBrkjYHKhh6hmPLivBR8H3ZUZ9K78U7H"
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -20,80 +21,100 @@ export async function GET(request: NextRequest) {
 
     console.log(`🔍 Buscando CEP: ${cleanCep}`)
 
-    // Tentar múltiplas APIs de CEP como fallback
-    let viaCepData = null
-    const addressData = null
+    // Buscar CEP usando API Invertexto
+    let cepData = null
 
-    // Tentativa 1: ViaCEP
     try {
-      console.log("📡 Tentando ViaCEP...")
-      const viaCepResponse = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`, {
-        method: "GET",
-        headers: {
-          "User-Agent": "AgroTrace/1.0",
-          Accept: "application/json",
-        },
-        signal: AbortSignal.timeout(10000), // 10 segundos timeout
-      })
-
-      if (viaCepResponse.ok) {
-        viaCepData = await viaCepResponse.json()
-        console.log("✅ ViaCEP respondeu:", viaCepData)
-
-        if (viaCepData.erro) {
-          throw new Error("CEP não encontrado no ViaCEP")
-        }
-      } else {
-        throw new Error(`ViaCEP retornou: ${viaCepResponse.status}`)
-      }
-    } catch (viaCepError) {
-      console.warn("⚠️ ViaCEP falhou:", viaCepError)
-
-      // Tentativa 2: API alternativa (CEP Aberto)
-      try {
-        console.log("📡 Tentando API alternativa...")
-        const altResponse = await fetch(`https://www.cepaberto.com/api/v3/cep?cep=${cleanCep}`, {
+      console.log("📡 Tentando API Invertexto...")
+      const invertextoResponse = await fetch(
+        `https://api.invertexto.com/v1/cep/${cleanCep}?token=${INVERTEXTO_TOKEN}`,
+        {
           method: "GET",
           headers: {
-            Authorization: "Token token=demo", // Token demo público
+            "User-Agent": "AgroTrace/1.0",
+            Accept: "application/json",
+          },
+          signal: AbortSignal.timeout(10000), // 10 segundos timeout
+        },
+      )
+
+      if (invertextoResponse.ok) {
+        const invertextoData = await invertextoResponse.json()
+        console.log("✅ API Invertexto respondeu:", invertextoData)
+
+        // Verificar se há erro na resposta
+        if (invertextoData.error || !invertextoData.cep) {
+          throw new Error("CEP não encontrado na API Invertexto")
+        }
+
+        // Converter formato da API Invertexto para o formato esperado
+        cepData = {
+          cep: invertextoData.cep,
+          logradouro: invertextoData.street || "",
+          bairro: invertextoData.neighborhood || "",
+          localidade: invertextoData.city || "",
+          uf: invertextoData.state || "",
+          complemento: invertextoData.complement || "",
+          ibge: invertextoData.ibge || "",
+        }
+      } else {
+        throw new Error(`API Invertexto retornou: ${invertextoResponse.status}`)
+      }
+    } catch (invertextoError) {
+      console.warn("⚠️ API Invertexto falhou:", invertextoError)
+
+      // Fallback: Tentar ViaCEP como alternativa
+      try {
+        console.log("📡 Tentando ViaCEP como fallback...")
+        const viaCepResponse = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`, {
+          method: "GET",
+          headers: {
+            "User-Agent": "AgroTrace/1.0",
             Accept: "application/json",
           },
           signal: AbortSignal.timeout(10000),
         })
 
-        if (altResponse.ok) {
-          const altData = await altResponse.json()
-          // Converter formato para compatibilidade
-          viaCepData = {
-            cep: altData.cep,
-            logradouro: altData.address || "",
-            bairro: altData.district || "",
-            localidade: altData.city || "",
-            uf: altData.state || "",
-          }
-          console.log("✅ API alternativa respondeu")
-        } else {
-          throw new Error("API alternativa falhou")
-        }
-      } catch (altError) {
-        console.warn("⚠️ API alternativa falhou:", altError)
+        if (viaCepResponse.ok) {
+          const viaCepData = await viaCepResponse.json()
+          console.log("✅ ViaCEP respondeu como fallback:", viaCepData)
 
-        // Tentativa 3: Usar dados básicos do CEP
+          if (viaCepData.erro) {
+            throw new Error("CEP não encontrado no ViaCEP")
+          }
+
+          // Converter formato ViaCEP para o formato esperado
+          cepData = {
+            cep: viaCepData.cep,
+            logradouro: viaCepData.logradouro || "",
+            bairro: viaCepData.bairro || "",
+            localidade: viaCepData.localidade || "",
+            uf: viaCepData.uf || "",
+            complemento: viaCepData.complemento || "",
+            ibge: viaCepData.ibge || "",
+          }
+        } else {
+          throw new Error(`ViaCEP retornou: ${viaCepResponse.status}`)
+        }
+      } catch (viaCepError) {
+        console.warn("⚠️ ViaCEP também falhou:", viaCepError)
+
+        // Último fallback: Usar dados básicos do CEP
         console.log("📡 Usando dados básicos do CEP...")
-        viaCepData = await getCepBasicData(cleanCep)
+        cepData = await getCepBasicData(cleanCep)
       }
     }
 
-    if (!viaCepData) {
+    if (!cepData) {
       return NextResponse.json({ error: "Não foi possível encontrar este CEP" }, { status: 404 })
     }
 
     // Monta o endereço completo
     const addressParts = [
-      viaCepData.logradouro || "",
-      viaCepData.bairro || "",
-      viaCepData.localidade || "",
-      viaCepData.uf || "",
+      cepData.logradouro || "",
+      cepData.bairro || "",
+      cepData.localidade || "",
+      cepData.uf || "",
       "Brasil",
     ].filter(Boolean)
 
@@ -102,18 +123,20 @@ export async function GET(request: NextRequest) {
     console.log(`📍 Endereço montado: ${fullAddress}`)
 
     // Geocodifica usando múltiplas APIs
-    const coordinates = await geocodeAddress(fullAddress, viaCepData.localidade, viaCepData.uf)
+    const coordinates = await geocodeAddress(fullAddress, cepData.localidade, cepData.uf)
 
     return NextResponse.json({
       lat: coordinates.lat,
       lng: coordinates.lng,
       address: fullAddress,
-      cep: viaCepData.cep,
+      cep: cepData.cep,
       details: {
-        logradouro: viaCepData.logradouro || "",
-        bairro: viaCepData.bairro || "",
-        localidade: viaCepData.localidade || "",
-        uf: viaCepData.uf || "",
+        logradouro: cepData.logradouro || "",
+        bairro: cepData.bairro || "",
+        localidade: cepData.localidade || "",
+        uf: cepData.uf || "",
+        complemento: cepData.complemento || "",
+        ibge: cepData.ibge || "",
       },
     })
   } catch (error) {
@@ -164,6 +187,8 @@ async function getCepBasicData(cep: string) {
       bairro: "",
       localidade: range.cidade,
       uf: range.uf,
+      complemento: "",
+      ibge: "",
     }
   }
 
@@ -174,6 +199,8 @@ async function getCepBasicData(cep: string) {
     bairro: "",
     localidade: "São Paulo",
     uf: "SP",
+    complemento: "",
+    ibge: "",
   }
 }
 
