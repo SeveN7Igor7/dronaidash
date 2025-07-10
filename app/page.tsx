@@ -295,7 +295,7 @@ export default function AgroTraceDashboard() {
 
         {/* Content */}
         {currentStep === "input" && (
-          <Card className="max-w-md mx-auto mx-4">
+          <Card className="max-w-md mx-auto">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="h-5 w-5" />
