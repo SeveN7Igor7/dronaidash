@@ -227,18 +227,18 @@ export default function AgroTraceDashboard() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
+          <div className="flex items-center justify-center gap-2 mb-4 px-4">
             <Satellite className="h-8 w-8 text-green-600" />
-            <h1 className="text-4xl font-bold text-gray-900">AgroTrace</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">AgroTrace</h1>
           </div>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto px-4">
             🌱 Análise da sua fazenda usando satélite e inteligência artificial
           </p>
         </div>
 
         {/* Progress Steps */}
-        <div className="flex items-center justify-center mb-8">
-          <div className="flex items-center space-x-4">
+        <div className="flex items-center justify-center mb-8 px-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 overflow-x-auto">
             <div
               className={`flex items-center gap-2 px-4 py-2 rounded-full ${
                 currentStep === "input"
@@ -249,9 +249,9 @@ export default function AgroTraceDashboard() {
               }`}
             >
               <MapPin className="h-4 w-4" />
-              <span className="text-sm font-medium">1. CEP</span>
+              <span className="text-xs sm:text-sm font-medium whitespace-nowrap">1. CEP</span>
             </div>
-            <div className="w-8 h-0.5 bg-gray-300"></div>
+            <div className="w-4 sm:w-8 h-0.5 bg-gray-300 flex-shrink-0"></div>
             <div
               className={`flex items-center gap-2 px-4 py-2 rounded-full ${
                 currentStep === "map"
@@ -262,9 +262,9 @@ export default function AgroTraceDashboard() {
               }`}
             >
               <MapIcon className="h-4 w-4" />
-              <span className="text-sm font-medium">2. Mapa</span>
+              <span className="text-xs sm:text-sm font-medium whitespace-nowrap">2. Mapa</span>
             </div>
-            <div className="w-8 h-0.5 bg-gray-300"></div>
+            <div className="w-4 sm:w-8 h-0.5 bg-gray-300 flex-shrink-0"></div>
             <div
               className={`flex items-center gap-2 px-4 py-2 rounded-full ${
                 currentStep === "results"
@@ -273,19 +273,19 @@ export default function AgroTraceDashboard() {
               }`}
             >
               <Brain className="h-4 w-4" />
-              <span className="text-sm font-medium">3. Resultado</span>
+              <span className="text-xs sm:text-sm font-medium whitespace-nowrap">3. Resultado</span>
             </div>
           </div>
         </div>
 
         {/* Error Alert */}
         {error && (
-          <Alert variant="destructive" className="mb-6 max-w-2xl mx-auto">
+          <Alert variant="destructive" className="mb-6 max-w-2xl mx-auto mx-4">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Erro encontrado</AlertTitle>
-            <AlertDescription className="flex items-center justify-between">
+            <AlertDescription className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
               <span>{error}</span>
-              <Button onClick={retryCurrentAction} variant="outline" size="sm" className="ml-4">
+              <Button onClick={retryCurrentAction} variant="outline" size="sm" className="sm:ml-4 w-full sm:w-auto">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Tentar Novamente {retryCount > 0 && `(${retryCount + 1}ª tentativa)`}
               </Button>
@@ -295,10 +295,11 @@ export default function AgroTraceDashboard() {
 
         {/* Content */}
         {currentStep === "input" && (
-          <Card className="max-w-md mx-auto">
+          <Card className="max-w-md mx-auto mx-4">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />📍 Onde fica sua fazenda?
+                <MapPin className="h-5 w-5" />
+                <span className="text-lg sm:text-xl">📍 Onde fica sua fazenda?</span>
               </CardTitle>
               <CardDescription>Digite o CEP da sua propriedade para começar</CardDescription>
             </CardHeader>
@@ -312,10 +313,11 @@ export default function AgroTraceDashboard() {
                   onChange={(e) => setCep(e.target.value)}
                   maxLength={9}
                   disabled={isLoadingCep}
+                  className="text-base"
                 />
                 <p className="text-xs text-gray-500">💡 Digite apenas os números ou com traço</p>
               </div>
-              <Button onClick={handleCepSubmit} className="w-full" size="lg" disabled={isLoadingCep}>
+              <Button onClick={handleCepSubmit} className="w-full text-base" size="lg" disabled={isLoadingCep}>
                 {isLoadingCep ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -327,7 +329,7 @@ export default function AgroTraceDashboard() {
               </Button>
 
               {/* Dicas para problemas de conexão */}
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm">
                 <p className="text-xs text-blue-700 font-medium mb-1">💡 Dicas se der erro:</p>
                 <ul className="text-xs text-blue-600 space-y-1">
                   <li>• Verifique sua conexão com a internet</li>
@@ -341,24 +343,24 @@ export default function AgroTraceDashboard() {
 
         {currentStep === "map" && coordinates && (
           <div className="space-y-6">
-            <Card>
+            <Card className="mx-4">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapIcon className="h-5 w-5" />
-                  🗺️ Ajustar Localização da Fazenda
+                  <span className="text-lg sm:text-xl">🗺️ Ajustar Localização da Fazenda</span>
                 </CardTitle>
-                <CardDescription>Mova o marcador vermelho para a posição exata da sua fazenda</CardDescription>
+                <CardDescription className="text-sm">Mova o marcador vermelho para a posição exata da sua fazenda</CardDescription>
               </CardHeader>
               <CardContent>
                 <MapComponent initialCoordinates={coordinates} onLocationSelect={handleLocationSelect} />
               </CardContent>
             </Card>
 
-            <div className="flex gap-4 justify-center">
-              <Button variant="outline" onClick={() => setCurrentStep("input")} size="lg">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
+              <Button variant="outline" onClick={() => setCurrentStep("input")} size="lg" className="w-full sm:w-auto">
                 ← Voltar
               </Button>
-              <Button onClick={handleAnalyze} disabled={isAnalyzing} className="min-w-40" size="lg">
+              <Button onClick={handleAnalyze} disabled={isAnalyzing} className="w-full sm:min-w-40 sm:w-auto" size="lg">
                 {isAnalyzing ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -374,7 +376,7 @@ export default function AgroTraceDashboard() {
 
             {/* Informações sobre o tempo de análise */}
             {isAnalyzing && (
-              <Card className="border-blue-200 bg-blue-50">
+              <Card className="border-blue-200 bg-blue-50 mx-4">
                 <CardContent className="pt-6">
                   <div className="text-center">
                     <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-blue-600" />
@@ -382,7 +384,7 @@ export default function AgroTraceDashboard() {
                     <p className="text-sm text-blue-700 mb-3">
                       Estamos baixando e analisando imagens de alta resolução. Isso pode demorar até 2 minutos.
                     </p>
-                    <div className="text-xs text-blue-600 space-y-1">
+                    <div className="text-xs text-blue-600 space-y-1 text-left sm:text-center">
                       <p>• Conectando com Sentinel Hub</p>
                       <p>• Baixando 7 tipos de imagens diferentes</p>
                       <p>• Processando dados espectrais</p>
@@ -397,19 +399,21 @@ export default function AgroTraceDashboard() {
 
         {currentStep === "results" && analysisData && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">📊 Resultado da Análise</h2>
-                <p className="text-gray-600">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">📊 Resultado da Análise</h2>
+                <p className="text-sm sm:text-base text-gray-600">
                   Análise concluída em {new Date(analysisData.timestamp).toLocaleString("pt-BR")}
                 </p>
               </div>
-              <Button onClick={resetAnalysis} variant="outline" size="lg">
+              <Button onClick={resetAnalysis} variant="outline" size="lg" className="w-full sm:w-auto">
                 🔄 Nova Análise
               </Button>
             </div>
 
-            <AnalysisResults data={analysisData} />
+            <div className="px-4">
+              <AnalysisResults data={analysisData} />
+            </div>
           </div>
         )}
       </div>

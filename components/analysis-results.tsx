@@ -148,10 +148,10 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
     <div className="space-y-6">
       {/* ALERTA CRÍTICO PARA ÁREAS URBANAS */}
       {areaClassification.isUrban && (
-        <Alert variant="destructive" className="border-2 border-red-300">
+        <Alert variant="destructive" className="border-2 border-red-300 mx-4 sm:mx-0">
           <XCircle className="h-5 w-5" />
-          <AlertTitle className="text-lg">🚨 ATENÇÃO: ESTA NÃO É UMA FAZENDA!</AlertTitle>
-          <AlertDescription className="text-base">
+          <AlertTitle className="text-base sm:text-lg">🚨 ATENÇÃO: ESTA NÃO É UMA FAZENDA!</AlertTitle>
+          <AlertDescription className="text-sm sm:text-base">
             <strong>
               Área urbana detectada com {areaClassification.urbanizationLevel.toFixed(0)}% de construções.
             </strong>
@@ -162,42 +162,42 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
       )}
 
       {/* RESULTADO PRINCIPAL */}
-      <Card className={`border-2 ${areaClassification.isUrban ? "border-red-200" : "border-green-200"}`}>
+      <Card className={`border-2 ${areaClassification.isUrban ? "border-red-200" : "border-green-200"} mx-4 sm:mx-0`}>
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">{getClassificationIcon(areaClassification.classification)}</div>
-          <CardTitle className="text-2xl">
+          <CardTitle className="text-lg sm:text-2xl">
             {getClassificationMessage(areaClassification.classification, areaClassification.isUrban)}
           </CardTitle>
-          <CardDescription className="text-lg">
+          <CardDescription className="text-sm sm:text-lg">
             Confiança da análise: {safeToFixed(areaClassification.confidence * 100, 0)}% | Versão{" "}
             {metadata.analysisVersion}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
             <div className="text-center p-3 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-lg sm:text-2xl font-bold text-blue-600">
                 {safeToFixed(spectralAnalysis?.landCover?.vegetation, 0)}%
               </div>
-              <div className="text-sm text-blue-700">🌱 Vegetação</div>
+              <div className="text-xs sm:text-sm text-blue-700">🌱 Vegetação</div>
             </div>
             <div className="text-center p-3 bg-red-50 rounded-lg">
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-lg sm:text-2xl font-bold text-red-600">
                 {safeToFixed(spectralAnalysis?.landCover?.urban, 0)}%
               </div>
-              <div className="text-sm text-red-700">🏘️ Área Urbana</div>
+              <div className="text-xs sm:text-sm text-red-700">🏘️ Área Urbana</div>
             </div>
             <div className="text-center p-3 bg-yellow-50 rounded-lg">
-              <div className="text-2xl font-bold text-yellow-600">
+              <div className="text-lg sm:text-2xl font-bold text-yellow-600">
                 {safeToFixed(spectralAnalysis?.landCover?.bareSoil, 0)}%
               </div>
-              <div className="text-sm text-yellow-700">🏜️ Solo Exposto</div>
+              <div className="text-xs sm:text-sm text-yellow-700">🏜️ Solo Exposto</div>
             </div>
             <div className="text-center p-3 bg-cyan-50 rounded-lg">
-              <div className="text-2xl font-bold text-cyan-600">
+              <div className="text-lg sm:text-2xl font-bold text-cyan-600">
                 {safeToFixed(spectralAnalysis?.landCover?.water, 0)}%
               </div>
-              <div className="text-sm text-cyan-700">🌊 Água</div>
+              <div className="text-xs sm:text-sm text-cyan-700">🌊 Água</div>
             </div>
           </div>
         </CardContent>
@@ -205,14 +205,14 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
 
       {/* ANÁLISE TEMPORAL (só para áreas agrícolas) */}
       {temporalAnalysis && areaClassification.isAgricultural && (
-        <Card>
+        <Card className="mx-4 sm:mx-0">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-blue-600" />📈 Como sua fazenda está evoluindo
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
               <div className="flex items-center gap-3">
                 {getTrendIcon(temporalAnalysis.trend.direction)}
                 <div>
@@ -221,7 +221,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                     {temporalAnalysis.trend.direction === "declining" && "📉 Piorando"}
                     {temporalAnalysis.trend.direction === "stable" && "📊 Estável"}
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-xs sm:text-sm text-gray-600">
                     Confiança: {temporalAnalysis.trend.confidence} | Padrão: {temporalAnalysis.seasonalPattern}
                   </div>
                 </div>
@@ -246,8 +246,8 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
 
       {/* PREVISÕES E RECOMENDAÇÕES (só para áreas agrícolas) */}
       {predictions && areaClassification.isAgricultural && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mx-4 sm:mx-0">
+          <Card className="w-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="h-5 w-5 text-purple-600" />🔮 Previsões para os próximos 30 dias
@@ -267,7 +267,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="w-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-green-600" />💡 O que fazer agora
@@ -291,14 +291,14 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
 
       {/* PRÓXIMA ANÁLISE (só para áreas agrícolas) */}
       {predictions?.nextAnalysisDate && areaClassification.isAgricultural && (
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-blue-50 border-blue-200 mx-4 sm:mx-0">
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <Calendar className="h-6 w-6 text-blue-600" />
                 <div>
                   <div className="font-semibold text-blue-900">📅 Próxima análise recomendada</div>
-                  <div className="text-blue-700">
+                  <div className="text-sm sm:text-base text-blue-700">
                     {new Date(predictions.nextAnalysisDate).toLocaleDateString("pt-BR", {
                       weekday: "long",
                       year: "numeric",
@@ -308,7 +308,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                   </div>
                 </div>
               </div>
-              <Button variant="outline" className="border-blue-300 text-blue-700">
+              <Button variant="outline" className="border-blue-300 text-blue-700 w-full sm:w-auto">
                 <Clock className="h-4 w-4 mr-2" />
                 Agendar Lembrete
               </Button>
@@ -319,42 +319,45 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
 
       {/* TABS DETALHADAS */}
       <Tabs defaultValue="relatorio" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 gap-2">
-          <TabsTrigger value="relatorio" className="flex flex-col items-center p-3">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 sm:gap-2 mx-4 sm:mx-0">
+          <TabsTrigger value="relatorio" className="flex flex-col items-center p-2 sm:p-3">
             <Brain className="h-4 w-4 mb-1" />
-            <span className="text-xs">📋 Relatório IA</span>
+            <span className="text-xs hidden sm:inline">📋 Relatório IA</span>
+            <span className="text-xs sm:hidden">📋 IA</span>
           </TabsTrigger>
-          <TabsTrigger value="imagens" className="flex flex-col items-center p-3">
+          <TabsTrigger value="imagens" className="flex flex-col items-center p-2 sm:p-3">
             <Camera className="h-4 w-4 mb-1" />
-            <span className="text-xs">📸 Imagens</span>
+            <span className="text-xs hidden sm:inline">📸 Imagens</span>
+            <span className="text-xs sm:hidden">📸</span>
           </TabsTrigger>
-          <TabsTrigger value="dados" className="flex flex-col items-center p-3">
+          <TabsTrigger value="dados" className="flex flex-col items-center p-2 sm:p-3">
             <BarChart3 className="h-4 w-4 mb-1" />
-            <span className="text-xs">📊 Dados Técnicos</span>
+            <span className="text-xs hidden sm:inline">📊 Dados Técnicos</span>
+            <span className="text-xs sm:hidden">📊</span>
           </TabsTrigger>
-          <TabsTrigger value="visual" className="flex flex-col items-center p-3">
+          <TabsTrigger value="visual" className="flex flex-col items-center p-2 sm:p-3 hidden sm:flex">
             <Eye className="h-4 w-4 mb-1" />
             <span className="text-xs">📊 Análise Visual</span>
           </TabsTrigger>
-          <TabsTrigger value="monitoramento" className="flex flex-col items-center p-3">
+          <TabsTrigger value="monitoramento" className="flex flex-col items-center p-2 sm:p-3 hidden sm:flex">
             <Eye className="h-4 w-4 mb-1" />
             <span className="text-xs">👁️ Monitoramento</span>
           </TabsTrigger>
-          <TabsTrigger value="historico" className="flex flex-col items-center p-3">
+          <TabsTrigger value="historico" className="flex flex-col items-center p-2 sm:p-3 hidden sm:flex">
             <Clock className="h-4 w-4 mb-1" />
             <span className="text-xs">📊 Histórico</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="relatorio">
-          <Card>
+          <Card className="mx-4 sm:mx-0">
             <CardHeader>
-              <CardTitle>🤖 Análise Completa por Inteligência Artificial</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">🤖 Análise Completa por Inteligência Artificial</CardTitle>
               <CardDescription>Interpretação detalhada dos dados coletados</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="prose prose-lg max-w-none">
-                <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">{interpretation}</div>
+              <div className="prose prose-sm sm:prose-lg max-w-none">
+                <div className="whitespace-pre-wrap text-gray-800 leading-relaxed text-sm sm:text-base">{interpretation}</div>
               </div>
             </CardContent>
           </Card>
@@ -362,17 +365,17 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
 
         <TabsContent value="imagens">
           {/* DEBUG: Mostrar estrutura das imagens */}
-          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg mx-4 sm:mx-0">
             <h4 className="font-semibold text-yellow-800 mb-2">🔍 Debug - Estrutura das Imagens:</h4>
-            <pre className="text-xs text-yellow-700 overflow-auto">
+            <pre className="text-xs text-yellow-700 overflow-auto break-all">
               {JSON.stringify(images, null, 2).substring(0, 500)}...
             </pre>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mx-4 sm:mx-0">
+            <Card className="w-full">
               <CardHeader>
-                <CardTitle className="text-lg">📸 Foto Real</CardTitle>
+                <CardTitle className="text-base sm:text-lg">📸 Foto Real</CardTitle>
                 <CardDescription>Como a área aparece do satélite</CardDescription>
               </CardHeader>
               <CardContent>
@@ -389,9 +392,9 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="w-full">
               <CardHeader>
-                <CardTitle className="text-lg">🌱 Saúde das Plantas</CardTitle>
+                <CardTitle className="text-base sm:text-lg">🌱 Saúde das Plantas</CardTitle>
                 <CardDescription>Verde = saudável, Vermelho = problema</CardDescription>
               </CardHeader>
               <CardContent>
@@ -413,9 +416,9 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="w-full">
               <CardHeader>
-                <CardTitle className="text-lg">🔍 Análise Detalhada</CardTitle>
+                <CardTitle className="text-base sm:text-lg">🔍 Análise Detalhada</CardTitle>
                 <CardDescription>Análise aprimorada da vegetação</CardDescription>
               </CardHeader>
               <CardContent>
@@ -437,9 +440,9 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="w-full">
               <CardHeader>
-                <CardTitle className="text-lg">🌍 Solo e Vegetação</CardTitle>
+                <CardTitle className="text-base sm:text-lg">🌍 Solo e Vegetação</CardTitle>
                 <CardDescription>Relação entre solo e plantas</CardDescription>
               </CardHeader>
               <CardContent>
@@ -461,9 +464,9 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="w-full">
               <CardHeader>
-                <CardTitle className="text-lg">🏘️ Detecção Urbana</CardTitle>
+                <CardTitle className="text-base sm:text-lg">🏘️ Detecção Urbana</CardTitle>
                 <CardDescription>Magenta = urbano, Verde = natural</CardDescription>
               </CardHeader>
               <CardContent>
@@ -488,10 +491,10 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
         </TabsContent>
 
         <TabsContent value="dados">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mx-4 sm:mx-0">
+            <Card className="w-full">
               <CardHeader>
-                <CardTitle>📊 Índices Espectrais</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">📊 Índices Espectrais</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -518,9 +521,9 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="w-full">
               <CardHeader>
-                <CardTitle>🗺️ Cobertura do Solo</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">🗺️ Cobertura do Solo</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -549,13 +552,13 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
         </TabsContent>
 
         <TabsContent value="visual">
-          <Card>
+          <Card className="mx-4 sm:mx-0">
             <CardHeader>
-              <CardTitle>👁️ Análise de Padrões Visuais</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">👁️ Análise de Padrões Visuais</CardTitle>
               <CardDescription>Detecção automática de padrões na imagem</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
                   <h4 className="font-semibold mb-3">🏗️ Padrões Detectados</h4>
                   <div className="space-y-2">
@@ -598,13 +601,13 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
         <TabsContent value="monitoramento">
           {areaClassification.isAgricultural && predictions?.monitoringPlan ? (
             <div className="space-y-6">
-              <Card>
+              <Card className="mx-4 sm:mx-0">
                 <CardHeader>
-                  <CardTitle>📋 Plano de Monitoramento</CardTitle>
+                  <CardTitle className="text-lg sm:text-xl">📋 Plano de Monitoramento</CardTitle>
                   <CardDescription>Como acompanhar sua fazenda</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
                       <h4 className="font-semibold mb-3">📅 Frequência</h4>
                       <Badge variant="outline" className="text-base p-2">
@@ -640,7 +643,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               </Card>
             </div>
           ) : (
-            <Card>
+            <Card className="mx-4 sm:mx-0">
               <CardContent className="pt-6 text-center">
                 <MapPin className="h-12 w-12 mx-auto mb-4 text-gray-400" />
                 <h3 className="text-lg font-semibold mb-2">Monitoramento não disponível</h3>
@@ -654,28 +657,28 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
           )}
         </TabsContent>
         <TabsContent value="historico">
-          <Card>
+          <Card className="mx-4 sm:mx-0">
             <CardHeader>
-              <CardTitle>📊 Histórico de Análises</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">📊 Histórico de Análises</CardTitle>
               <CardDescription>Registro completo desta análise</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <h4 className="font-semibold mb-2">📋 Informações da Análise</h4>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span>ID da Análise:</span>
-                        <code className="bg-gray-100 px-2 py-1 rounded">{data.analysisId || "N/A"}</code>
+                        <code className="bg-gray-100 px-2 py-1 rounded text-xs break-all">{data.analysisId || "N/A"}</code>
                       </div>
                       <div className="flex justify-between">
                         <span>Data/Hora:</span>
-                        <span>{new Date(data.timestamp).toLocaleString()}</span>
+                        <span className="text-xs">{new Date(data.timestamp).toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Versão do Algoritmo:</span>
-                        <span>{metadata.analysisVersion}</span>
+                        <span className="text-xs">{metadata.analysisVersion}</span>
                       </div>
                     </div>
                   </div>
@@ -695,7 +698,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                 </div>
                 <div>
                   <h4 className="font-semibold mb-2">📝 Notas Adicionais</h4>
-                  <p className="text-sm text-gray-700">
+                  <p className="text-xs sm:text-sm text-gray-700">
                     Esta análise foi gerada automaticamente. Para mais detalhes ou suporte, entre em contato com nossa
                     equipe.
                   </p>

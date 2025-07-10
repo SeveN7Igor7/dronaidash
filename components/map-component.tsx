@@ -294,29 +294,29 @@ export function MapComponent({ initialCoordinates, onLocationSelect }: MapCompon
   return (
     <div className="space-y-4">
       {/* Barra de busca */}
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <Input
           placeholder="Digite o nome da cidade ou endereço..."
           value={searchAddress}
           onChange={(e) => setSearchAddress(e.target.value)}
           onKeyPress={(e) => e.key === "Enter" && searchLocation()}
-          className="flex-1"
+          className="flex-1 text-base"
           disabled={isSearching}
         />
-        <Button onClick={searchLocation} disabled={isSearching || !searchAddress.trim()}>
+        <Button onClick={searchLocation} disabled={isSearching || !searchAddress.trim()} className="w-full sm:w-auto">
           {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
         </Button>
       </div>
 
       {/* Informações da localização */}
-      <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg">
-        <div className="flex items-center gap-2 text-sm text-green-700">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-green-50 p-3 rounded-lg gap-2">
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-green-700">
           <MapPin className="h-4 w-4" />
           <span>
             📍 Lat: {currentCoords.lat.toFixed(4)}, Lng: {currentCoords.lng.toFixed(4)}
           </span>
         </div>
-        <Button onClick={getCurrentLocation} variant="outline" size="sm" disabled={isSearching}>
+        <Button onClick={getCurrentLocation} variant="outline" size="sm" disabled={isSearching} className="w-full sm:w-auto">
           {isSearching ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Navigation className="h-4 w-4 mr-2" />}
           Onde estou
         </Button>
@@ -336,15 +336,15 @@ export function MapComponent({ initialCoordinates, onLocationSelect }: MapCompon
 
         <div
           ref={mapRef}
-          className="w-full h-96 rounded-lg border-2 border-green-200 bg-gray-100"
-          style={{ minHeight: "400px" }}
+          className="w-full h-64 sm:h-96 rounded-lg border-2 border-green-200 bg-gray-100"
+          style={{ minHeight: "300px" }}
         />
       </div>
 
       {/* Instruções */}
       <div className="text-center bg-blue-50 p-4 rounded-lg">
-        <p className="text-sm text-blue-700 font-medium mb-1">🗺️ Como usar o mapa:</p>
-        <div className="text-xs text-blue-600 space-y-1">
+        <p className="text-xs sm:text-sm text-blue-700 font-medium mb-1">🗺️ Como usar o mapa:</p>
+        <div className="text-xs text-blue-600 space-y-1 text-left sm:text-center">
           <p>• Clique em qualquer lugar do mapa para marcar sua fazenda</p>
           <p>• Arraste o marcador vermelho para ajustar a posição</p>
           <p>• Use "Onde estou" para ir para sua localização atual</p>
