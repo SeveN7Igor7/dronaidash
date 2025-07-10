@@ -319,38 +319,37 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
 
       {/* TABS DETALHADAS */}
       <Tabs defaultValue="relatorio" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 sm:gap-2 mx-4 sm:mx-0">
-          <TabsTrigger value="relatorio" className="flex flex-col items-center p-2 sm:p-3">
+        <div className="w-full overflow-x-auto mx-4 sm:mx-0 mb-4">
+          <TabsList className="inline-flex h-auto min-w-full w-max p-1 bg-muted rounded-md">
+            <TabsTrigger value="relatorio" className="flex flex-col items-center justify-center p-2 sm:p-3 min-w-[80px] sm:min-w-[120px] whitespace-nowrap">
             <Brain className="h-4 w-4 mb-1" />
-            <span className="text-xs hidden sm:inline">📋 Relatório IA</span>
-            <span className="text-xs sm:hidden">📋 IA</span>
+            <span className="text-[10px] sm:text-xs">📋 Relatório IA</span>
           </TabsTrigger>
-          <TabsTrigger value="imagens" className="flex flex-col items-center p-2 sm:p-3">
+            <TabsTrigger value="imagens" className="flex flex-col items-center justify-center p-2 sm:p-3 min-w-[80px] sm:min-w-[120px] whitespace-nowrap">
             <Camera className="h-4 w-4 mb-1" />
-            <span className="text-xs hidden sm:inline">📸 Imagens</span>
-            <span className="text-xs sm:hidden">📸</span>
+            <span className="text-[10px] sm:text-xs">📸 Imagens</span>
           </TabsTrigger>
-          <TabsTrigger value="dados" className="flex flex-col items-center p-2 sm:p-3">
+            <TabsTrigger value="dados" className="flex flex-col items-center justify-center p-2 sm:p-3 min-w-[80px] sm:min-w-[120px] whitespace-nowrap">
             <BarChart3 className="h-4 w-4 mb-1" />
-            <span className="text-xs hidden sm:inline">📊 Dados Técnicos</span>
-            <span className="text-xs sm:hidden">📊</span>
+            <span className="text-[10px] sm:text-xs">📊 Dados</span>
           </TabsTrigger>
-          <TabsTrigger value="visual" className="flex flex-col items-center p-2 sm:p-3 hidden sm:flex">
+            <TabsTrigger value="visual" className="flex flex-col items-center justify-center p-2 sm:p-3 min-w-[80px] sm:min-w-[120px] whitespace-nowrap">
             <Eye className="h-4 w-4 mb-1" />
-            <span className="text-xs">📊 Análise Visual</span>
+            <span className="text-[10px] sm:text-xs">👁️ Visual</span>
           </TabsTrigger>
-          <TabsTrigger value="monitoramento" className="flex flex-col items-center p-2 sm:p-3 hidden sm:flex">
-            <Eye className="h-4 w-4 mb-1" />
-            <span className="text-xs">👁️ Monitoramento</span>
+            <TabsTrigger value="monitoramento" className="flex flex-col items-center justify-center p-2 sm:p-3 min-w-[80px] sm:min-w-[120px] whitespace-nowrap">
+            <Activity className="h-4 w-4 mb-1" />
+            <span className="text-[10px] sm:text-xs">📊 Monitor</span>
           </TabsTrigger>
-          <TabsTrigger value="historico" className="flex flex-col items-center p-2 sm:p-3 hidden sm:flex">
+            <TabsTrigger value="historico" className="flex flex-col items-center justify-center p-2 sm:p-3 min-w-[80px] sm:min-w-[120px] whitespace-nowrap">
             <Clock className="h-4 w-4 mb-1" />
-            <span className="text-xs">📊 Histórico</span>
+            <span className="text-[10px] sm:text-xs">📊 Histórico</span>
           </TabsTrigger>
-        </TabsList>
+          </TabsList>
+        </div>
 
         <TabsContent value="relatorio">
-          <Card className="mx-4 sm:mx-0">
+          <Card className="mx-4 sm:mx-0 mt-4">
             <CardHeader>
               <CardTitle className="text-lg sm:text-xl">🤖 Análise Completa por Inteligência Artificial</CardTitle>
               <CardDescription>Interpretação detalhada dos dados coletados</CardDescription>
@@ -365,7 +364,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
 
         <TabsContent value="imagens">
           {/* DEBUG: Mostrar estrutura das imagens */}
-          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg mx-4 sm:mx-0">
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg mx-4 sm:mx-0 mt-4">
             <h4 className="font-semibold text-yellow-800 mb-2">🔍 Debug - Estrutura das Imagens:</h4>
             <pre className="text-xs text-yellow-700 overflow-auto break-all">
               {JSON.stringify(images, null, 2).substring(0, 500)}...
@@ -491,7 +490,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
         </TabsContent>
 
         <TabsContent value="dados">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mx-4 sm:mx-0">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mx-4 sm:mx-0 mt-4">
             <Card className="w-full">
               <CardHeader>
                 <CardTitle className="text-lg sm:text-xl">📊 Índices Espectrais</CardTitle>
@@ -552,7 +551,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
         </TabsContent>
 
         <TabsContent value="visual">
-          <Card className="mx-4 sm:mx-0">
+          <Card className="mx-4 sm:mx-0 mt-4">
             <CardHeader>
               <CardTitle className="text-lg sm:text-xl">👁️ Análise de Padrões Visuais</CardTitle>
               <CardDescription>Detecção automática de padrões na imagem</CardDescription>
@@ -600,7 +599,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
 
         <TabsContent value="monitoramento">
           {areaClassification.isAgricultural && predictions?.monitoringPlan ? (
-            <div className="space-y-6">
+            <div className="space-y-6 mt-4">
               <Card className="mx-4 sm:mx-0">
                 <CardHeader>
                   <CardTitle className="text-lg sm:text-xl">📋 Plano de Monitoramento</CardTitle>
@@ -643,7 +642,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               </Card>
             </div>
           ) : (
-            <Card className="mx-4 sm:mx-0">
+            <Card className="mx-4 sm:mx-0 mt-4">
               <CardContent className="pt-6 text-center">
                 <MapPin className="h-12 w-12 mx-auto mb-4 text-gray-400" />
                 <h3 className="text-lg font-semibold mb-2">Monitoramento não disponível</h3>
@@ -657,7 +656,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
           )}
         </TabsContent>
         <TabsContent value="historico">
-          <Card className="mx-4 sm:mx-0">
+          <Card className="mx-4 sm:mx-0 mt-4">
             <CardHeader>
               <CardTitle className="text-lg sm:text-xl">📊 Histórico de Análises</CardTitle>
               <CardDescription>Registro completo desta análise</CardDescription>
