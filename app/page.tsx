@@ -1,15 +1,32 @@
 "use client"
 
 import { useState } from "react"
-import { Satellite, Brain, Loader2, MapIcon, RefreshCw, AlertCircle } from "lucide-react"
-import { CepForm } from "@/components/forms/cep-form"
-import { MapSelector } from "@/components/maps/map-selector"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { MapPin, Satellite, Brain, Loader2, MapIcon, RefreshCw, AlertCircle } from "lucide-react"
+import { MapComponent } from "@/components/map-component"
 import { AnalysisResults } from "@/components/analysis-results"
-import { AnalysisHeader } from "@/components/analysis/analysis-header"
 import { toast } from "@/hooks/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
-import type { Coordinates, AnalysisData } from "@/lib/types"
+
+interface Coordinates {
+  lat: number
+  lng: number
+}
+
+interface AnalysisData {
+  spectralAnalysis: any
+  areaClassification: any
+  temporalAnalysis?: any
+  interpretation: string
+  predictions?: any
+  images: any
+  location: any
+  metadata: any
+  timestamp: string
+}
 
 export default function AgroTraceDashboard() {
   const [cep, setCep] = useState("")
@@ -21,11 +38,87 @@ export default function AgroTraceDashboard() {
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
 
-  const handleLocationFound = (coords: Coordinates) => {
-    setCoordinates(coords)
-    setCurrentStep("map")
+  const handleCepSubmit = async () => {
+    if (!cep) {
+      toast({
+        title: "⚠️ CEP obrigatório",
+        description: "Por favor, digite o CEP da sua fazenda",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Limpar CEP (remover pontos e traços)
+    const cleanCep = cep.replace(/\D/g, "")
+
+    if (cleanCep.length !== 8) {
+      toast({
+        title: "⚠️ CEP inválido",
+        description: "O CEP deve ter 8 números (ex: 12345678)",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsLoadingCep(true)
     setError(null)
-    setRetryCount(0)
+
+    try {
+      console.log("🔍 Buscando CEP:", cleanCep)
+
+      const response = await fetch(`/api/geocode?cep=${cleanCep}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        signal: AbortSignal.timeout(30000), // 30 segundos timeout
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Erro HTTP: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.error) {
+        throw new Error(data.error)
+      }
+
+      setCoordinates({ lat: data.lat, lng: data.lng })
+      setCurrentStep("map")
+      setRetryCount(0)
+
+      toast({
+        title: "✅ CEP encontrado!",
+        description: `Localização: ${data.details.localidade}, ${data.details.uf}`,
+      })
+    } catch (error) {
+      console.error("❌ Erro ao buscar CEP:", error)
+
+      let errorMessage = "Erro ao buscar CEP. Tente novamente."
+
+      if (error instanceof Error) {
+        if (error.name === "AbortError") {
+          errorMessage = "Tempo limite esgotado. Verifique sua conexão."
+        } else if (error.message.includes("fetch failed")) {
+          errorMessage = "Erro de conexão. Verifique sua internet."
+        } else if (error.message.includes("não encontrado")) {
+          errorMessage = "CEP não encontrado. Verifique se digitou corretamente."
+        } else {
+          errorMessage = error.message
+        }
+      }
+
+      setError(errorMessage)
+      toast({
+        title: "❌ Erro ao buscar CEP",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoadingCep(false)
+    }
   }
 
   const handleLocationSelect = (coords: Coordinates) => {
@@ -122,7 +215,9 @@ export default function AgroTraceDashboard() {
 
   const retryCurrentAction = () => {
     setError(null)
-    if (currentStep === "map") {
+    if (currentStep === "input") {
+      handleCepSubmit()
+    } else if (currentStep === "map") {
       handleAnalyze()
     }
   }
@@ -153,7 +248,7 @@ export default function AgroTraceDashboard() {
                     : "bg-gray-100 text-gray-500"
               }`}
             >
-              <div className="h-4 w-4">📍</div>
+              <MapPin className="h-4 w-4" />
               <span className="text-xs sm:text-sm font-medium whitespace-nowrap">1. CEP</span>
             </div>
             <div className="w-4 sm:w-8 h-0.5 bg-gray-300 flex-shrink-0"></div>
@@ -200,22 +295,121 @@ export default function AgroTraceDashboard() {
 
         {/* Content */}
         {currentStep === "input" && (
-          <CepForm onLocationFound={handleLocationFound} />
+          <Card className="max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                <span className="text-lg sm:text-xl">📍 Onde fica sua fazenda?</span>
+              </CardTitle>
+              <CardDescription>Digite o CEP da sua propriedade para começar</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="cep">CEP da Fazenda</Label>
+                <Input
+                  id="cep"
+                  placeholder="12345-678 ou 12345678"
+                  value={cep}
+                  onChange={(e) => setCep(e.target.value)}
+                  maxLength={9}
+                  disabled={isLoadingCep}
+                  className="text-base"
+                />
+                <p className="text-xs text-gray-500">💡 Digite apenas os números ou com traço</p>
+              </div>
+              <Button onClick={handleCepSubmit} className="w-full text-base" size="lg" disabled={isLoadingCep}>
+                {isLoadingCep ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Buscando CEP...
+                  </>
+                ) : (
+                  <>🔍 Buscar Localização</>
+                )}
+              </Button>
+
+              {/* Dicas para problemas de conexão */}
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm">
+                <p className="text-xs text-blue-700 font-medium mb-1">💡 Dicas se der erro:</p>
+                <ul className="text-xs text-blue-600 space-y-1">
+                  <li>• Verifique sua conexão com a internet</li>
+                  <li>• Confirme se o CEP está correto</li>
+                  <li>• Tente novamente em alguns segundos</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {currentStep === "map" && coordinates && (
-          <MapSelector
-            coordinates={coordinates}
-            onLocationSelect={handleLocationSelect}
-            onAnalyze={handleAnalyze}
-            onBack={() => setCurrentStep("input")}
-            isAnalyzing={isAnalyzing}
-          />
+          <div className="space-y-6">
+            <Card className="mx-4">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapIcon className="h-5 w-5" />
+                  <span className="text-lg sm:text-xl">🗺️ Ajustar Localização da Fazenda</span>
+                </CardTitle>
+                <CardDescription className="text-sm">Mova o marcador vermelho para a posição exata da sua fazenda</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <MapComponent initialCoordinates={coordinates} onLocationSelect={handleLocationSelect} />
+              </CardContent>
+            </Card>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
+              <Button variant="outline" onClick={() => setCurrentStep("input")} size="lg" className="w-full sm:w-auto">
+                ← Voltar
+              </Button>
+              <Button onClick={handleAnalyze} disabled={isAnalyzing} className="w-full sm:min-w-40 sm:w-auto" size="lg">
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Analisando...
+                  </>
+                ) : (
+                  <>
+                    <Satellite className="h-4 w-4 mr-2" />🚀 Analisar Fazenda
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Informações sobre o tempo de análise */}
+            {isAnalyzing && (
+              <Card className="border-blue-200 bg-blue-50 mx-4">
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-blue-600" />
+                    <h3 className="font-semibold text-blue-900 mb-2">🛰️ Processando dados do satélite...</h3>
+                    <p className="text-sm text-blue-700 mb-3">
+                      Estamos baixando e analisando imagens de alta resolução. Isso pode demorar até 2 minutos.
+                    </p>
+                    <div className="text-xs text-blue-600 space-y-1 text-left sm:text-center">
+                      <p>• Conectando com Sentinel Hub</p>
+                      <p>• Baixando 7 tipos de imagens diferentes</p>
+                      <p>• Processando dados espectrais</p>
+                      <p>• Gerando análise com IA</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         )}
 
         {currentStep === "results" && analysisData && (
           <div className="space-y-6">
-            <AnalysisHeader data={analysisData} onReset={resetAnalysis} />
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-4">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">📊 Resultado da Análise</h2>
+                <p className="text-sm sm:text-base text-gray-600">
+                  Análise concluída em {new Date(analysisData.timestamp).toLocaleString("pt-BR")}
+                </p>
+              </div>
+              <Button onClick={resetAnalysis} variant="outline" size="lg" className="w-full sm:w-auto">
+                🔄 Nova Análise
+              </Button>
+            </div>
 
             <div className="px-4">
               <AnalysisResults data={analysisData} />

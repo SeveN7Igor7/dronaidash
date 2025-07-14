@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { MapPin, Navigation, Search, Loader2 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
-import type { Coordinates } from "@/lib/types"
+
+interface Coordinates {
+  lat: number
+  lng: number
+}
 
 interface MapComponentProps {
   initialCoordinates: Coordinates
@@ -252,8 +256,8 @@ export function MapComponent({ initialCoordinates, onLocationSelect }: MapCompon
 
       if (data && data.length > 0) {
         const newCoords = {
-          lat: parseFloat(data[0].lat),
-          lng: parseFloat(data[0].lon),
+          lat: Number.parseFloat(data[0].lat),
+          lng: Number.parseFloat(data[0].lon),
         }
 
         if (mapInstanceRef.current && markerRef.current) {
