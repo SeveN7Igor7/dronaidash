@@ -267,6 +267,7 @@ SEJA ESPECÍFICO e use seu conhecimento agrícola!
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(60000),
         body: JSON.stringify({
           contents: [
             {
@@ -803,6 +804,7 @@ Máximo 500 palavras, linguagem técnica mas acessível.
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(60000),
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
         }),
@@ -1137,6 +1139,7 @@ async function getSentinelToken() {
   const response = await fetch("https://services.sentinel-hub.com/oauth/token", {
     method: "POST",
     body: params,
+    signal: AbortSignal.timeout(60000),
   })
 
   const data = await response.json()
@@ -1203,6 +1206,7 @@ async function downloadSentinelImage(
       "Content-Type": "application/json",
       Accept: formatType === "image/tiff" ? "application/octet-stream" : formatType,
     },
+    signal: AbortSignal.timeout(60000),
     body: JSON.stringify(body),
   })
 
