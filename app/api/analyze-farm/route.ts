@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 
 const CLIENT_ID = process.env.SENTINEL_CLIENT_ID || "88065105-d1fb-48df-a050-d92e770933a8"
 const CLIENT_SECRET = process.env.SENTINEL_CLIENT_SECRET || "wyoU2BR5SaVfNoDJDAJZFev9jJeHF5nT"
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyBCOv7eXRZ4XIz47aJAF92Y1F4MDLKDv5M"
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyDg47oxwsRkQpOJaT_UwCoe5nS4JAFp3sE"
 
 export async function POST(request: NextRequest) {
   try {
