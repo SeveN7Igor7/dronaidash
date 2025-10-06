@@ -30,6 +30,7 @@ interface AnalysisData {
 
 export default function AgroTraceDashboard() {
   const [cep, setCep] = useState("")
+  const [cepError, setCepError] = useState("")
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isLoadingCep, setIsLoadingCep] = useState(false)
@@ -37,6 +38,37 @@ export default function AgroTraceDashboard() {
   const [currentStep, setCurrentStep] = useState<"input" | "map" | "results">("input")
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
+
+  // Função para formatar e validar CEP em tempo real
+  const handleCepChange = (value: string) => {
+    // Remove tudo que não é número
+    const onlyNumbers = value.replace(/\D/g, "")
+    
+    // Limita a 8 dígitos
+    const limited = onlyNumbers.slice(0, 8)
+    
+    // Formata como 12345-678
+    let formatted = limited
+    if (limited.length > 5) {
+      formatted = `${limited.slice(0, 5)}-${limited.slice(5)}`
+    }
+    
+    setCep(formatted)
+    
+    // Validação em tempo real
+    if (limited.length === 0) {
+      setCepError("")
+    } else if (limited.length < 8) {
+      setCepError("CEP incompleto")
+    } else {
+      const cepNum = parseInt(limited)
+      if (cepNum < 1000000 || cepNum > 99999999) {
+        setCepError("CEP fora da faixa válida")
+      } else {
+        setCepError("")
+      }
+    }
+  }
 
   const handleCepSubmit = async () => {
     if (!cep) {
@@ -51,10 +83,22 @@ export default function AgroTraceDashboard() {
     // Limpar CEP (remover pontos e traços)
     const cleanCep = cep.replace(/\D/g, "")
 
+    // Validações aprimoradas
     if (cleanCep.length !== 8) {
       toast({
         title: "⚠️ CEP inválido",
-        description: "O CEP deve ter 8 números (ex: 12345678)",
+        description: "O CEP deve ter exatamente 8 números (ex: 12345-678)",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Verificar se é um CEP válido (faixa brasileira)
+    const cepNum = parseInt(cleanCep)
+    if (cepNum < 1000000 || cepNum > 99999999) {
+      toast({
+        title: "⚠️ CEP fora da faixa",
+        description: "Este CEP não está na faixa válida de CEPs brasileiros",
         variant: "destructive",
       })
       return
@@ -62,6 +106,12 @@ export default function AgroTraceDashboard() {
 
     setIsLoadingCep(true)
     setError(null)
+
+    // Feedback de progresso
+    toast({
+      title: "🔍 Buscando CEP...",
+      description: "Aguarde, estamos localizando seu endereço",
+    })
 
     try {
       console.log("🔍 Buscando CEP:", cleanCep)
@@ -85,37 +135,65 @@ export default function AgroTraceDashboard() {
         throw new Error(data.error)
       }
 
+      // Validar dados recebidos
+      if (!data.lat || !data.lng) {
+        throw new Error("Coordenadas não encontradas para este CEP")
+      }
+
       setCoordinates({ lat: data.lat, lng: data.lng })
       setCurrentStep("map")
       setRetryCount(0)
 
       toast({
-        title: "✅ CEP encontrado!",
-        description: `Localização: ${data.details.localidade}, ${data.details.uf}`,
+        title: "✅ CEP encontrado com sucesso!",
+        description: `📍 ${data.details.localidade}, ${data.details.uf} - Clique no mapa para ajustar a localização exata`,
       })
     } catch (error) {
       console.error("❌ Erro ao buscar CEP:", error)
 
       let errorMessage = "Erro ao buscar CEP. Tente novamente."
+      let errorTitle = "❌ Erro ao buscar CEP"
 
       if (error instanceof Error) {
         if (error.name === "AbortError") {
-          errorMessage = "Tempo limite esgotado. Verifique sua conexão."
-        } else if (error.message.includes("fetch failed")) {
-          errorMessage = "Erro de conexão. Verifique sua internet."
+          errorMessage = "Tempo limite esgotado. Verifique sua conexão com a internet e tente novamente."
+          errorTitle = "⏱️ Tempo esgotado"
+        } else if (error.message.includes("fetch failed") || error.message.includes("Failed to fetch")) {
+          errorMessage = "Erro de conexão. Verifique se você está conectado à internet."
+          errorTitle = "🌐 Sem conexão"
         } else if (error.message.includes("não encontrado")) {
           errorMessage = "CEP não encontrado. Verifique se digitou corretamente."
+          errorTitle = "🔍 CEP não encontrado"
+        } else if (error.message.includes("Coordenadas não encontradas")) {
+          errorMessage = "Não foi possível obter as coordenadas deste CEP. Tente outro CEP próximo."
+          errorTitle = "📍 Localização indisponível"
         } else {
           errorMessage = error.message
         }
       }
 
       setError(errorMessage)
-      toast({
-        title: "❌ Erro ao buscar CEP",
-        description: errorMessage,
-        variant: "destructive",
-      })
+      
+      // Opção de retry
+      if (retryCount < 2) {
+        toast({
+          title: errorTitle,
+          description: `${errorMessage} Tentando novamente... (${retryCount + 1}/3)`,
+          variant: "destructive",
+        })
+        setRetryCount(retryCount + 1)
+        
+        // Retry automático após 2 segundos
+        setTimeout(() => {
+          handleCepSubmit()
+        }, 2000)
+      } else {
+        toast({
+          title: errorTitle,
+          description: errorMessage,
+          variant: "destructive",
+        })
+      }
     } finally {
       setIsLoadingCep(false)
     }
@@ -308,16 +386,34 @@ export default function AgroTraceDashboard() {
                 <Label htmlFor="cep">CEP da Fazenda</Label>
                 <Input
                   id="cep"
-                  placeholder="12345-678 ou 12345678"
+                  placeholder="12345-678"
                   value={cep}
-                  onChange={(e) => setCep(e.target.value)}
+                  onChange={(e) => handleCepChange(e.target.value)}
                   maxLength={9}
                   disabled={isLoadingCep}
-                  className="text-base"
+                  className={`text-base ${cepError && cep ? "border-red-500" : ""}`}
+                  autoComplete="postal-code"
+                  inputMode="numeric"
                 />
-                <p className="text-xs text-gray-500">💡 Digite apenas os números ou com traço</p>
+                {cepError && cep && (
+                  <p className="text-xs text-red-500 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {cepError}
+                  </p>
+                )}
+                {!cepError && cep.replace(/\D/g, "").length === 8 && (
+                  <p className="text-xs text-green-600 flex items-center gap-1">
+                    ✓ CEP válido
+                  </p>
+                )}
+                <p className="text-xs text-gray-500">💡 Digite 8 números do CEP da sua propriedade</p>
               </div>
-              <Button onClick={handleCepSubmit} className="w-full text-base" size="lg" disabled={isLoadingCep}>
+              <Button 
+                onClick={handleCepSubmit} 
+                className="w-full text-base" 
+                size="lg" 
+                disabled={isLoadingCep || cep.replace(/\D/g, "").length !== 8 || !!cepError}
+              >
                 {isLoadingCep ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />

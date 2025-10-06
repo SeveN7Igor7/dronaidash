@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { identifyCropBySpectralData, getCropRecommendations, BRAZILIAN_CROPS } from "@/lib/crop-database"
 
 const CLIENT_ID = process.env.SENTINEL_CLIENT_ID || "88065105-d1fb-48df-a050-d92e770933a8"
 const CLIENT_SECRET = process.env.SENTINEL_CLIENT_SECRET || "wyoU2BR5SaVfNoDJDAJZFev9jJeHF5nT"
@@ -211,55 +212,157 @@ async function performCompleteAIAnalysis(rgbBuffer: ArrayBuffer, coordinates: an
     const base64Image = Buffer.from(rgbBuffer).toString("base64")
 
     const prompt = `
-Você é um especialista em agricultura e análise de imagens de satélite. Analise esta imagem detalhadamente.
+Você é um AGRÔNOMO ESPECIALISTA com 20+ anos de experiência em agricultura de precisão, sensoriamento remoto e análise de imagens de satélite.
+Sua missão é fornecer uma análise PRECISA, DETALHADA e PROFISSIONAL desta imagem de satélite.
 
-TAREFAS:
-1. CLASSIFICAÇÃO: É fazenda/rural ou cidade/urbana?
-2. IDENTIFICAÇÃO DE CULTURAS: Se for fazenda, que tipo de plantação você vê?
-3. SAÚDE DAS PLANTAS: Como está a vegetação?
-4. PROBLEMAS: Vê algum problema na área?
-5. PADRÕES: Descreva os padrões que identifica
-6. ESTÁGIO: Se for cultura, em que estágio está?
+🌍 CONTEXTO:
+Coordenadas: ${coordinates.lat}, ${coordinates.lng}
+Esta é uma imagem de satélite Sentinel-2 em cor verdadeira (RGB).
 
-CULTURAS POSSÍVEIS NO BRASIL:
-- Soja, Milho, Cana-de-açúcar, Café, Algodão, Arroz, Feijão, Trigo
-- Pastagem, Eucalipto, Citros, Banana, Tomate, Batata
-- Hortaliças, Flores, Fruticultura
+📋 ANÁLISE DETALHADA REQUERIDA:
 
-Responda em JSON:
+1️⃣ CLASSIFICAÇÃO DO USO DO SOLO:
+   - Tipo: Área agrícola / Área urbana / Área de preservação / Água / Mista
+   - Confiança: 0.0-1.0 (seja criterioso!)
+   - Características observadas: lista específica do que você vê
+
+2️⃣ IDENTIFICAÇÃO DE CULTURAS (se área agrícola):
+
+   PRINCIPAIS CULTURAS DO BRASIL E SUAS CARACTERÍSTICAS:
+   
+   🌾 SOJA: 
+   - Padrão: Fileiras regulares 45-50cm, verde uniforme intenso
+   - Estágios: Emergência (solo exposto) → Vegetativo (verde crescente) → Floração (cobertura máxima, verde escuro) → Enchimento (verde mantido) → Maturação (amarelado/marrom)
+   
+   🌽 MILHO:
+   - Padrão: Fileiras muito visíveis 70-90cm, estrutura vertical
+   - Estágios: Emergência (linhas claras) → Vegetativo (crescimento rápido) → Floração (altura máxima, pendão) → Enchimento (verde mantido) → Maturação (amarelo/seco)
+   
+   🎋 CANA-DE-AÇÚCAR:
+   - Padrão: Linhas largas 1.4-1.5m, plantio em sulcos, verde constante
+   - Ciclo longo: Brotação → Perfilhamento → Crescimento → Maturação
+   - Características: Uniforme, verde durante todo o ano, corte mecanizado visível
+   
+   ☕ CAFÉ:
+   - Padrão: Fileiras em curvas de nível, arbustivo perene
+   - Características: Verde constante, copas arredondadas, sombra entre linhas
+   - Estágios: Repouso → Floração (branco) → Granação → Maturação (vermelho/amarelo)
+   
+   🌱 ALGODÃO:
+   - Padrão: Fileiras regulares 76-90cm, arbustivo
+   - Estágios: Emergência → Vegetativo → Floração (branco/amarelo) → Frutificação → Abertura (branco visível)
+   
+   🐄 PASTAGEM:
+   - Padrão: Cobertura contínua sem linhas, irregular, variação de tons
+   - Características: Verde heterogêneo, sem padrão de plantio, pode ter trilhas de gado
+   
+   🌳 EUCALIPTO:
+   - Padrão: Linhas regulares 3x2m, copas circulares visíveis
+   - Características: Verde escuro constante, sombra pronunciada, textura uniforme
+
+3️⃣ ANÁLISE DE SAÚDE E VIGOR:
+   - Estado geral: EXCELENTE (verde intenso, uniforme) / BOM / REGULAR / RUIM / CRÍTICO
+   - Densidade vegetativa: ALTA (cobertura >80%) / MÉDIA (40-80%) / BAIXA (<40%)
+   - Padrão de cor: verde intenso / verde normal / verde claro / amarelado / marrom / misto
+   - Uniformidade: muito uniforme / uniforme / irregular / muito irregular / extremamente irregular
+
+4️⃣ DETECÇÃO DE PROBLEMAS E ANOMALIAS:
+   
+   Procure por:
+   ✗ Déficit hídrico: Áreas amareladas, marrons, vegetação rala
+   ✗ Pragas/Doenças: Manchas irregulares, descoloração, falhas na vegetação
+   ✗ Solo exposto: Áreas sem cobertura vegetal, erosão
+   ✗ Estresse nutricional: Amarelecimento uniforme, crescimento reduzido
+   ✗ Compactação: Poças d'água, áreas com crescimento reduzido
+   ✗ Falhas de plantio: Linhas incompletas, espaços vazios
+   ✗ Invasoras: Áreas com vegetação diferente do padrão
+   ✗ Danos mecânicos: Marcas de máquinas, áreas danificadas
+
+5️⃣ ANÁLISE DE PADRÕES E MANEJO:
+   - Formato do talhão: regular / irregular / circular / retangular / curvas de nível
+   - Padrão de plantio: fileiras paralelas / aleatório / circular / terraceamento / sem padrão definido
+   - Sinais de irrigação: pivô central / aspersão / gotejamento / sem irrigação
+   - Marcas de maquinário: presentes / ausentes
+   - Sistema de plantio: convencional / plantio direto / orgânico / outro
+
+6️⃣ ESTÁGIO FENOLÓGICO (se cultura anual):
+   - Estágio atual: emergência / crescimento inicial / desenvolvimento vegetativo / floração / frutificação/enchimento / maturação / pós-colheita / pousio
+   - Dias estimados desde plantio: 0-30 / 30-60 / 60-90 / 90-120 / >120
+   - Próxima fase esperada: [descrever]
+
+7️⃣ RECOMENDAÇÕES AGRONÔMICAS ESPECÍFICAS:
+   - Baseie-se no que observou para dar recomendações práticas e aplicáveis
+   - Seja específico: "Verificar sistema de irrigação no setor nordeste" em vez de "Melhorar irrigação"
+
+📊 RESPONDA EM JSON VÁLIDO (sem comentários, sem text markdown):
 {
-  "classification": "urban" ou "rural",
-  "confidence": 0.1-1.0,
+  "classification": "agricultural" ou "urban" ou "mixed" ou "water" ou "forest",
+  "confidence": [0.0-1.0 - seja rigoroso!],
+  "landUseDetails": {
+    "primaryUse": "[descrição específica]",
+    "secondaryUse": "[se aplicável]",
+    "characteristics": ["lista", "de", "características", "observadas"]
+  },
   "cropIdentification": {
-    "primaryCrop": "nome da cultura principal ou 'unknown'",
-    "secondaryCrop": "cultura secundária se houver",
-    "confidence": 0.1-1.0,
-    "growthStage": "plantio/crescimento/floração/colheita/pousio",
-    "reasoning": "por que identificou essa cultura"
+    "primaryCrop": "[Nome exato da cultura ou 'unknown' ou 'pastagem' ou 'floresta']",
+    "primaryCropConfidence": [0.0-1.0],
+    "alternativeCrops": ["cultura2", "cultura3"] ou [],
+    "reasoning": "[Explique EXATAMENTE o que você viu que te levou a essa identificação]",
+    "growthStage": "[estágio específico]",
+    "daysAfterPlanting": [número estimado ou null],
+    "phenologicalIndicators": ["indicador1", "indicador2"]
   },
   "healthAssessment": {
     "overallHealth": "excelente/boa/regular/ruim/crítica",
+    "healthScore": [0.0-1.0],
     "vegetationDensity": "alta/média/baixa",
-    "colorPattern": "verde intenso/verde normal/amarelado/marrom/misto",
-    "uniformity": "uniforme/irregular/muito irregular"
+    "coveragePercentage": [0-100],
+    "colorPattern": "[descrição detalhada da cor]",
+    "uniformity": "muito uniforme/uniforme/irregular/muito irregular",
+    "vigorIndicators": ["indicador1", "indicador2"]
   },
   "problemsDetected": [
-    "lista de problemas identificados como: seca, pragas, doenças, solo exposto, etc"
+    {
+      "type": "[tipo específico]",
+      "severity": "baixa/média/alta/crítica",
+      "location": "[onde na imagem]",
+      "description": "[descrição detalhada]",
+      "possibleCauses": ["causa1", "causa2"]
+    }
   ],
   "patterns": {
-    "fieldShape": "regular/irregular/circular/retangular",
-    "plantingPattern": "fileiras/aleatório/circular/terraceado",
+    "fieldShape": "[forma específica]",
+    "plantingPattern": "[padrão observado]",
+    "rowSpacing": "[estimativa em cm ou 'não aplicável']",
     "irrigationSigns": true/false,
-    "machineryMarks": true/false
+    "irrigationType": "[tipo se identificado]",
+    "machineryMarks": true/false,
+    "terrainTopography": "[plano/ondulado/montanhoso]",
+    "soilVisibility": "[porcentagem aproximada]"
+  },
+  "management": {
+    "plantingSystem": "[tipo de sistema]",
+    "conservationPractices": ["prática1", "prática2"],
+    "technologyLevel": "baixo/médio/alto/muito alto"
   },
   "recommendations": [
-    "recomendações baseadas no que observou"
+    {
+      "priority": "alta/média/baixa",
+      "action": "[ação específica e prática]",
+      "reasoning": "[por que essa recomendação]",
+      "expectedBenefit": "[benefício esperado]"
+    }
   ],
-  "reasoning": "explicação detalhada do que você viu",
-  "details": "descrição completa da imagem"
+  "detailedAnalysis": "[Análise completa e profissional de 3-5 parágrafos descrevendo tudo que você observou na imagem, como se fosse um laudo agronômico]",
+  "confidence_note": "[Explique o nível de confiança da sua análise]"
 }
 
-SEJA ESPECÍFICO e use seu conhecimento agrícola!
+⚠️ IMPORTANTE:
+- Seja PRECISO e TÉCNICO
+- Baseie-se apenas no que REALMENTE vê na imagem
+- Se não tiver certeza, indique menor confiança
+- Use terminologia agronômica correta
+- Forneça dados quantitativos quando possível
 `
 
     const response = await fetch(
@@ -299,49 +402,115 @@ SEJA ESPECÍFICO e use seu conhecimento agrícola!
 
     console.log("🤖 Resposta completa da IA:", aiResponse.substring(0, 500) + "...")
 
-    // Extrair JSON da resposta
+    // Extrair JSON da resposta com tratamento robusto
     let aiResult
     try {
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/)
+      // Remover markdown se presente
+      let cleanResponse = aiResponse.replace(/```json\n?/g, "").replace(/```\n?/g, "")
+      
+      const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
         aiResult = JSON.parse(jsonMatch[0])
       } else {
-        throw new Error("JSON não encontrado")
+        throw new Error("JSON não encontrado na resposta")
       }
     } catch (parseError) {
-      console.warn("⚠️ Erro ao parsear JSON, usando análise de texto")
+      console.warn("⚠️ Erro ao parsear JSON:", parseError)
+      console.log("Resposta da IA:", aiResponse.substring(0, 1000))
       aiResult = parseAIResponseText(aiResponse)
     }
 
+    // Validar e normalizar dados
+    const classification = aiResult.classification || "rural"
+    const isUrban = classification === "urban"
+    const isAgricultural = !isUrban && classification !== "water" && classification !== "forest"
+
     const result = {
-      classification: aiResult.classification === "urban" ? "urban_detected" : "agricultural_detected",
-      confidence: Math.max(0.7, Math.min(1.0, aiResult.confidence || 0.8)),
-      isUrban: aiResult.classification === "urban",
-      isAgricultural: aiResult.classification === "rural",
-      cropIdentification: aiResult.cropIdentification || {
-        primaryCrop: "unknown",
-        confidence: 0.5,
-        growthStage: "unknown",
-        reasoning: "Não foi possível identificar",
+      classification: isUrban ? "urban_detected" : "agricultural_detected",
+      confidence: Math.max(0.5, Math.min(1.0, aiResult.confidence || 0.75)),
+      isUrban,
+      isAgricultural,
+      
+      // Informações de uso do solo
+      landUseDetails: aiResult.landUseDetails || {
+        primaryUse: "agricultural",
+        secondaryUse: "",
+        characteristics: [],
       },
-      healthAssessment: aiResult.healthAssessment || {
-        overallHealth: "regular",
-        vegetationDensity: "média",
-        colorPattern: "verde normal",
-        uniformity: "irregular",
+      
+      // Identificação de cultura aprimorada
+      cropIdentification: {
+        primaryCrop: aiResult.cropIdentification?.primaryCrop || "unknown",
+        primaryCropConfidence: aiResult.cropIdentification?.primaryCropConfidence || 0.5,
+        alternativeCrops: aiResult.cropIdentification?.alternativeCrops || [],
+        reasoning: aiResult.cropIdentification?.reasoning || "Análise baseada em padrões espectrais",
+        growthStage: aiResult.cropIdentification?.growthStage || "indeterminado",
+        daysAfterPlanting: aiResult.cropIdentification?.daysAfterPlanting || null,
+        phenologicalIndicators: aiResult.cropIdentification?.phenologicalIndicators || [],
       },
-      problemsDetected: aiResult.problemsDetected || [],
-      patterns: aiResult.patterns || {},
-      recommendations: aiResult.recommendations || [],
-      reasoning: aiResult.reasoning || "Análise visual por IA",
-      details: aiResult.details || "",
+      
+      // Avaliação de saúde aprimorada
+      healthAssessment: {
+        overallHealth: aiResult.healthAssessment?.overallHealth || "regular",
+        healthScore: aiResult.healthAssessment?.healthScore || 0.6,
+        vegetationDensity: aiResult.healthAssessment?.vegetationDensity || "média",
+        coveragePercentage: aiResult.healthAssessment?.coveragePercentage || 50,
+        colorPattern: aiResult.healthAssessment?.colorPattern || "verde normal",
+        uniformity: aiResult.healthAssessment?.uniformity || "irregular",
+        vigorIndicators: aiResult.healthAssessment?.vigorIndicators || [],
+      },
+      
+      // Problemas detectados (formato aprimorado)
+      problemsDetected: Array.isArray(aiResult.problemsDetected) 
+        ? aiResult.problemsDetected 
+        : [],
+      
+      // Padrões observados (expandido)
+      patterns: {
+        fieldShape: aiResult.patterns?.fieldShape || "irregular",
+        plantingPattern: aiResult.patterns?.plantingPattern || "não identificado",
+        rowSpacing: aiResult.patterns?.rowSpacing || "não aplicável",
+        irrigationSigns: aiResult.patterns?.irrigationSigns || false,
+        irrigationType: aiResult.patterns?.irrigationType || "não identificado",
+        machineryMarks: aiResult.patterns?.machineryMarks || false,
+        terrainTopography: aiResult.patterns?.terrainTopography || "plano",
+        soilVisibility: aiResult.patterns?.soilVisibility || "baixa",
+      },
+      
+      // Informações de manejo
+      management: aiResult.management || {
+        plantingSystem: "convencional",
+        conservationPractices: [],
+        technologyLevel: "médio",
+      },
+      
+      // Recomendações detalhadas
+      recommendations: Array.isArray(aiResult.recommendations) 
+        ? aiResult.recommendations 
+        : [],
+      
+      // Análise detalhada
+      detailedAnalysis: aiResult.detailedAnalysis || "Análise não disponível",
+      confidenceNote: aiResult.confidence_note || "",
+      
+      // Dados legados (compatibilidade)
+      reasoning: aiResult.detailedAnalysis || "Análise visual por IA",
+      details: aiResult.detailedAnalysis || "",
       rawResponse: aiResponse,
     }
 
-    console.log(`✅ IA classificou: ${result.classification}`)
-    console.log(`🌱 Cultura identificada: ${result.cropIdentification.primaryCrop}`)
-    console.log(`💚 Saúde: ${result.healthAssessment.overallHealth}`)
-    console.log(`⚠️ Problemas: ${result.problemsDetected.length} detectados`)
+    console.log(`✅ IA classificou: ${result.classification} (confiança: ${(result.confidence * 100).toFixed(1)}%)`)
+    console.log(`🌱 Cultura identificada: ${result.cropIdentification.primaryCrop} (${(result.cropIdentification.primaryCropConfidence * 100).toFixed(1)}%)`)
+    console.log(`🌾 Estágio fenológico: ${result.cropIdentification.growthStage}`)
+    console.log(`💚 Saúde: ${result.healthAssessment.overallHealth} (score: ${result.healthAssessment.healthScore.toFixed(2)})`)
+    console.log(`📊 Cobertura: ${result.healthAssessment.coveragePercentage}%`)
+    console.log(`⚠️ Problemas detectados: ${result.problemsDetected.length}`)
+    
+    if (result.problemsDetected.length > 0) {
+      result.problemsDetected.forEach((problem: any, idx: number) => {
+        console.log(`   ${idx + 1}. ${problem.type || problem} - ${problem.severity || 'N/A'}`)
+      })
+    }
 
     return result
   } catch (error) {
@@ -375,17 +544,28 @@ async function processAdvancedSpectralData(buffers: any) {
   // ANÁLISE AVANÇADA DE COBERTURA
   const totalPixels = ndviData.validPixels.length
 
-  // Vegetação por categorias
-  const excellentVegetation = ndviData.validPixels.filter((val) => val > 0.6).length
-  const goodVegetation = ndviData.validPixels.filter((val) => val > 0.4 && val <= 0.6).length
-  const moderateVegetation = ndviData.validPixels.filter((val) => val > 0.2 && val <= 0.4).length
-  const poorVegetation = ndviData.validPixels.filter((val) => val > 0.1 && val <= 0.2).length
-  const noVegetation = ndviData.validPixels.filter((val) => val <= 0.1).length
+  // Vegetação por categorias com tipos explícitos
+  const excellentVegetation = ndviData.validPixels.filter((val: number) => val > 0.6).length
+  const goodVegetation = ndviData.validPixels.filter((val: number) => val > 0.4 && val <= 0.6).length
+  const moderateVegetation = ndviData.validPixels.filter((val: number) => val > 0.2 && val <= 0.4).length
+  const poorVegetation = ndviData.validPixels.filter((val: number) => val > 0.1 && val <= 0.2).length
+  const noVegetation = ndviData.validPixels.filter((val: number) => val <= 0.1).length
 
   // Outras categorias
-  const urbanPixels = urbanData.validPixels.filter((val) => val > 0.1).length
-  const waterPixels = waterData.validPixels.filter((val) => val > 0.3).length
-  const wetSoilPixels = moistureData.validPixels.filter((val) => val > 0.2).length
+  const urbanPixels = urbanData.validPixels.filter((val: number) => val > 0.1).length
+  const waterPixels = waterData.validPixels.filter((val: number) => val > 0.3).length
+  const wetSoilPixels = moistureData.validPixels.filter((val: number) => val > 0.2).length
+
+  // Validação de dados espectrais (detectar anomalias)
+  const ndviStats = calculateStatistics(ndviData.validPixels)
+  const eviStats = calculateStatistics(eviData.validPixels)
+  
+  const spectralQuality = {
+    ndviValid: ndviStats.mean >= -1 && ndviStats.mean <= 1,
+    eviValid: eviStats.mean >= -1 && eviStats.mean <= 1,
+    dataCompleteness: (ndviData.validPixels.length / (ndviData.validPixels.length + 100)) * 100, // aproximado
+    anomaliesDetected: detectSpectralAnomalies(ndviData.validPixels, eviData.validPixels),
+  }
 
   const advancedLandCover = {
     vegetation: {
@@ -405,10 +585,19 @@ async function processAdvancedSpectralData(buffers: any) {
   const ndviVariability = calculateVariability(ndviData.validPixels)
   const moistureVariability = calculateVariability(moistureData.validPixels)
 
+  // IDENTIFICAÇÃO DE CULTURA POR DADOS ESPECTRAIS
+  const spectralCropIdentification = identifyCropBySpectralData(
+    ndviStats.mean,
+    eviStats.mean,
+    saviData.mean
+  )
+
   console.log(`🌱 Vegetação total: ${advancedLandCover.vegetation.total.toFixed(1)}%`)
   console.log(`⭐ Vegetação excelente: ${advancedLandCover.vegetation.excellent.toFixed(1)}%`)
   console.log(`💧 Umidade do solo: ${advancedLandCover.wetSoil.toFixed(1)}%`)
   console.log(`📊 Variabilidade NDVI: ${ndviVariability.coefficient.toFixed(3)}`)
+  console.log(`🌾 Cultura por assinatura espectral: ${spectralCropIdentification.crop} (confiança: ${(spectralCropIdentification.confidence * 100).toFixed(1)}%)`)
+  console.log(`🔬 Qualidade espectral: ${spectralQuality.anomaliesDetected.length === 0 ? 'OK' : `${spectralQuality.anomaliesDetected.length} anomalias`}`)
 
   return {
     ndvi: ndviData,
@@ -422,6 +611,8 @@ async function processAdvancedSpectralData(buffers: any) {
       ndvi: ndviVariability,
       moisture: moistureVariability,
     },
+    spectralCropIdentification,
+    spectralQuality,
     dominantLandUse:
       advancedLandCover.vegetation.total > 50 ? "vegetation" : advancedLandCover.urban > 30 ? "urban" : "mixed",
     qualityMetrics: {
@@ -485,6 +676,21 @@ async function performCompleteAnalysis(aiAnalysis: any, spectralAnalysis: any, c
   console.log(`💚 Score de saúde: ${healthScore.toFixed(1)}/100`)
   console.log(`⚠️ Issues detectados: ${issues.length}`)
 
+  // DETERMINAR MELHOR CULTURA IDENTIFICADA (combinar IA + dados espectrais)
+  let finalCropIdentification = aiAnalysis.cropIdentification?.primaryCrop || "unknown"
+  let finalCropConfidence = aiAnalysis.cropIdentification?.primaryCropConfidence || 0.5
+
+  // Se a análise espectral tem alta confiança, considerar ela também
+  if (spectralAnalysis.spectralCropIdentification && spectralAnalysis.spectralCropIdentification.confidence > 0.7) {
+    if (finalCropIdentification === "unknown" || finalCropConfidence < 0.6) {
+      finalCropIdentification = spectralAnalysis.spectralCropIdentification.crop
+      finalCropConfidence = spectralAnalysis.spectralCropIdentification.confidence
+    }
+  }
+
+  // Gerar recomendações específicas da cultura
+  const cropSpecificRecommendations = getCropRecommendations(finalCropIdentification, healthScore / 100)
+
   return {
     classification,
     confidence,
@@ -494,14 +700,17 @@ async function performCompleteAnalysis(aiAnalysis: any, spectralAnalysis: any, c
     needsAttention: issues.length > 0 || healthScore < 70,
     healthScore,
     issues,
-    cropType: aiAnalysis.cropIdentification?.primaryCrop || "unknown",
+    cropType: finalCropIdentification,
+    cropConfidence: finalCropConfidence,
     growthStage: aiAnalysis.cropIdentification?.growthStage || "unknown",
+    cropSpecificRecommendations,
     urbanizationLevel: landCover.urban,
     vegetationHealth: ndvi.mean,
     moistureLevel: moisture.mean,
     variabilityIndex: variability.ndvi.coefficient,
     advancedMetrics,
     returnPoints,
+    spectralCropIdentification: spectralAnalysis.spectralCropIdentification,
     aiAnalysis: {
       classification: aiAnalysis.classification,
       reasoning: aiAnalysis.reasoning,
@@ -512,6 +721,9 @@ async function performCompleteAnalysis(aiAnalysis: any, spectralAnalysis: any, c
       problemsDetected: aiAnalysis.problemsDetected,
       patterns: aiAnalysis.patterns,
       recommendations: aiAnalysis.recommendations,
+      landUseDetails: aiAnalysis.landUseDetails,
+      management: aiAnalysis.management,
+      detailedAnalysis: aiAnalysis.detailedAnalysis,
     },
     spectralMetrics: {
       ndvi: ndvi.mean,
@@ -1078,6 +1290,74 @@ async function extractDataFromTiff(buffer: ArrayBuffer, indexName: string) {
     validPixels: values,
     totalPixels: values.length,
   }
+}
+
+// Função para calcular estatísticas de um array de valores
+function calculateStatistics(values: number[]) {
+  if (!values || values.length === 0) {
+    return { mean: 0, median: 0, std: 0, min: 0, max: 0 }
+  }
+
+  const sorted = [...values].sort((a, b) => a - b)
+  const sum = values.reduce((acc, val) => acc + val, 0)
+  const mean = sum / values.length
+  
+  const median = sorted.length % 2 === 0
+    ? (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
+    : sorted[Math.floor(sorted.length / 2)]
+  
+  const variance = values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / values.length
+  const std = Math.sqrt(variance)
+  
+  return {
+    mean: Number(mean.toFixed(4)),
+    median: Number(median.toFixed(4)),
+    std: Number(std.toFixed(4)),
+    min: sorted[0],
+    max: sorted[sorted.length - 1],
+  }
+}
+
+// Função para detectar anomalias espectrais
+function detectSpectralAnomalies(ndviValues: number[], eviValues: number[]): string[] {
+  const anomalies: string[] = []
+  
+  // Calcular estatísticas
+  const ndviStats = calculateStatistics(ndviValues)
+  const eviStats = calculateStatistics(eviValues)
+  
+  // Detectar valores fora do esperado
+  if (ndviStats.mean < -0.5 || ndviStats.mean > 1.0) {
+    anomalies.push(`NDVI fora da faixa normal: ${ndviStats.mean.toFixed(3)}`)
+  }
+  
+  if (eviStats.mean < -0.5 || eviStats.mean > 1.0) {
+    anomalies.push(`EVI fora da faixa normal: ${eviStats.mean.toFixed(3)}`)
+  }
+  
+  // Detectar variação excessiva (possível erro ou heterogeneidade extrema)
+  if (ndviStats.std > 0.3) {
+    anomalies.push(`Alta variação no NDVI (std: ${ndviStats.std.toFixed(3)})`)
+  }
+  
+  if (eviStats.std > 0.3) {
+    anomalies.push(`Alta variação no EVI (std: ${eviStats.std.toFixed(3)})`)
+  }
+  
+  // Detectar inconsistência entre índices (NDVI e EVI geralmente correlacionam)
+  const ndviEviRatio = ndviStats.mean / (eviStats.mean + 0.001) // evitar divisão por zero
+  if (ndviEviRatio < 0.5 || ndviEviRatio > 3.0) {
+    anomalies.push(`Inconsistência entre NDVI e EVI (razão: ${ndviEviRatio.toFixed(2)})`)
+  }
+  
+  // Detectar valores negativos em excesso (sinal de água ou erro)
+  const negativeNdvi = ndviValues.filter(v => v < 0).length
+  const negativePercentage = (negativeNdvi / ndviValues.length) * 100
+  if (negativePercentage > 30) {
+    anomalies.push(`Alto percentual de NDVI negativo: ${negativePercentage.toFixed(1)}%`)
+  }
+  
+  return anomalies
 }
 
 function generateFallback(indexName: string) {
