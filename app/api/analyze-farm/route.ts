@@ -1,4 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { database } from "@/lib/firebase"
+import { ref, set, push } from "firebase/database"
 
 const CLIENT_ID = process.env.SENTINEL_CLIENT_ID || "25f833eb-7e0c-4d9d-82d9-f0e8ea2882f1"
 const CLIENT_SECRET = process.env.SENTINEL_CLIENT_SECRET || "VBuaK0TThGqpagMx142bjEWk6ev3FmQW"
@@ -6,10 +8,14 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyDg47oxwsRkQpOJaT_UwC
 
 export async function POST(request: NextRequest) {
   try {
-    const { coordinates, cep } = await request.json()
+    const { coordinates, cep, email } = await request.json()
 
     if (!coordinates || !coordinates.lat || !coordinates.lng) {
       return NextResponse.json({ error: "Coordenadas são obrigatórias" }, { status: 400 })
+    }
+
+    if (!email) {
+      return NextResponse.json({ error: "Email é obrigatório" }, { status: 400 })
     }
 
     const analysisId = `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -141,10 +147,11 @@ export async function POST(request: NextRequest) {
       moisture: images.moisture.data,
     }
 
-    // SALVAR NO HISTÓRICO (simulado - em produção seria banco de dados)
+    // SALVAR NO FIREBASE REALTIME DATABASE
     const historyEntry = {
       id: analysisId,
       timestamp,
+      email,
       coordinates,
       cep,
       classification: completeAnalysis.classification,
@@ -152,10 +159,40 @@ export async function POST(request: NextRequest) {
       cropType: aiAnalysis.cropIdentification?.primaryCrop || "unknown",
       healthScore: completeAnalysis.healthScore,
       issues: completeAnalysis.issues,
-      images: Object.keys(images),
+      spectralData: {
+        ndvi: spectralAnalysis.ndvi,
+        evi: spectralAnalysis.evi,
+        savi: spectralAnalysis.savi,
+        moisture: spectralAnalysis.moisture,
+      },
+      interpretation,
+      predictions,
+      monitoring,
     }
 
-    console.log("💾 Salvando no histórico:", historyEntry)
+    console.log("💾 Salvando análise no Firebase...")
+    try {
+      // Salvar em /analyses/{email_sanitizado}/{analysisId}
+      const sanitizedEmail = email.replace(/[.#$[\]]/g, "_")
+      const analysisRef = ref(database, `analyses/${sanitizedEmail}/${analysisId}`)
+      await set(analysisRef, historyEntry)
+      
+      // Também criar um índice por timestamp em /user_analyses/{email_sanitizado}
+      const userAnalysesRef = ref(database, `user_analyses/${sanitizedEmail}`)
+      const newAnalysisRef = push(userAnalysesRef)
+      await set(newAnalysisRef, {
+        analysisId,
+        timestamp,
+        classification: completeAnalysis.classification,
+        healthScore: completeAnalysis.healthScore,
+        coordinates,
+      })
+      
+      console.log("✅ Análise salva no Firebase com sucesso!")
+    } catch (firebaseError) {
+      console.error("❌ Erro ao salvar no Firebase:", firebaseError)
+      // Não falhar a requisição se o Firebase falhar
+    }
 
     console.log("✅ ANÁLISE COMPLETA CONCLUÍDA!")
 

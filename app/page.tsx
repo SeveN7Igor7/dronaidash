@@ -30,6 +30,7 @@ interface AnalysisData {
 
 export default function AgroTraceDashboard() {
   const [cep, setCep] = useState("")
+  const [email, setEmail] = useState("")
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isLoadingCep, setIsLoadingCep] = useState(false)
@@ -136,6 +137,26 @@ export default function AgroTraceDashboard() {
       return
     }
 
+    if (!email) {
+      toast({
+        title: "⚠️ Email obrigatório",
+        description: "Por favor, digite seu email para salvar a análise",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validação simples de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      toast({
+        title: "⚠️ Email inválido",
+        description: "Por favor, digite um email válido",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsAnalyzing(true)
     setError(null)
 
@@ -153,6 +174,7 @@ export default function AgroTraceDashboard() {
         body: JSON.stringify({
           coordinates: coordinates,
           cep: cep,
+          email: email,
         }),
         signal: AbortSignal.timeout(120000), // 2 minutos timeout
       })
@@ -209,6 +231,7 @@ export default function AgroTraceDashboard() {
     setCoordinates(null)
     setAnalysisData(null)
     setCep("")
+    setEmail("")
     setError(null)
     setRetryCount(0)
   }
@@ -353,6 +376,30 @@ export default function AgroTraceDashboard() {
               </CardHeader>
               <CardContent>
                 <MapComponent initialCoordinates={coordinates} onLocationSelect={handleLocationSelect} />
+              </CardContent>
+            </Card>
+
+            <Card className="mx-4">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                  📧 Seu Email
+                </CardTitle>
+                <CardDescription>Digite seu email para salvar os resultados da análise</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isAnalyzing}
+                    className="text-base"
+                  />
+                  <p className="text-xs text-gray-500">💡 Usaremos para salvar seu histórico de análises</p>
+                </div>
               </CardContent>
             </Card>
 
