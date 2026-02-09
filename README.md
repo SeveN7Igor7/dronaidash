@@ -86,9 +86,11 @@ Exemplos:
 ---
 
 ## 📁 Estrutura do projeto
-app/            → rotas e páginas (Next.js)
-components/     → componentes reutilizáveis
-lib/            → integrações com APIs externas
-hooks/          → hooks customizados
-services/       → chamadas HTTP
-public/         → assets estáticos
+
+- **app/** → rotas e páginas (Next.js App Router)
+- **components/** → componentes reutilizáveis de UI
+- **hooks/** → hooks customizados
+- **lib/** → integrações com APIs externas
+- **services/** → chamadas HTTP
+- **public/** → assets estáticos
+- **styles/** → estilos globais
