@@ -1,30 +1,94 @@
-# Agrotrace dashboard
+# 🌱 AgroTrace — Agricultural Satellite Intelligence Platform
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+Plataforma web para **monitoramento agrícola via sensoriamento remoto**, utilizando **imagens de satélite multispectrais**, análise de solo e dados climáticos para gerar **insights agronômicos automatizados** para fazendas.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/seven7igor7s-projects/v0-agrotrace-dashboard)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/2kRVPFcEXml)
+O sistema integra imagens orbitais, processamento espectral (ex: índices de vegetação) e dados meteorológicos para apoiar decisões como:
 
-## Overview
+- Condições do solo para plantio
+- Estresse hídrico
+- Saúde da vegetação
+- Planejamento de uso de defensivos
+- Previsão de clima/chuvas
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+---
 
-## Deployment
+## 🚀 Visão geral do produto
 
-Your project is live at:
+O **DronaiDash** permite que produtores informem sua localização via mapa + CEP e recebam automaticamente análises baseadas em:
 
-**[https://vercel.com/seven7igor7s-projects/v0-agrotrace-dashboard](https://vercel.com/seven7igor7s-projects/v0-agrotrace-dashboard)**
+- 🛰️ Imagens de satélite multispectrais  
+- 🌧️ Dados climáticos  
+- 🧮 Processamento de índices agronômicos  
+- 📊 Visualização via dashboard interativo  
 
-## Build your app
+---
 
-Continue building your app on:
+## 🧠 Como funciona (fluxo do sistema)
 
-**[https://v0.dev/chat/projects/2kRVPFcEXml](https://v0.dev/chat/projects/2kRVPFcEXml)**
+### 1. Autenticação
+- Login seguro
+- Usuários armazenados via FireBase
 
-## How It Works
+### 2. Cadastro da propriedade
+- Inserção do CEP
+- Seleção da área no mapa (API de mapas)
+- Definição do talhão/fazenda
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+### 3. Coleta de dados externos
+- Imagens orbitais via API SentinelHub
+- Dados climáticos (chuva, temperatura, previsão) via API Maps
+
+### 4. Processamento
+Aplicação de filtros/índices multispectrais:
+
+Exemplos:
+- NDVI (saúde da vegetação)
+- NDWI (umidade)
+- Análise de estresse hídrico
+- Condições do solo
+
+### 5. Entrega de insights
+- Mapas temáticos
+- Indicadores visuais
+- Recomendações para o produtor
+- Dashboard web interativo
+
+---
+
+## 🛠️ Stack tecnológica
+
+### Frontend
+- Next.js (App Router)
+- TypeScript
+- TailwindCSS
+
+### Backend / Serviços
+- Firebase (Auth + Database)
+- APIs de satélite (Sentinel Hub)
+- APIs climáticas (OpenWeather)
+- APIs de mapas (Maps)
+
+### Deploy
+- Vercel
+
+---
+
+## 📦 Funcionalidades atuais
+
+- [x] Autenticação de usuários
+- [x] Landing page com cadastro da propriedade
+- [x] Seleção de localização via mapa
+- [x] Integração com imagens de satélite
+- [x] Processamento espectral de imagens
+- [x] Dashboard com visualização dos resultados
+- [x] Banco de dados em nuvem
+
+---
+
+## 📁 Estrutura do projeto
+app/            → rotas e páginas (Next.js)
+components/     → componentes reutilizáveis
+lib/            → integrações com APIs externas
+hooks/          → hooks customizados
+services/       → chamadas HTTP
+public/         → assets estáticos
